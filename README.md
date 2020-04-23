@@ -34,6 +34,10 @@ Just use your Room Combiner component as usual to group rooms together. When roo
 
 ![Usage](https://github.com/jcerecke/Component-Syncer-for-Room-Combiner/raw/master/images/usage.gif)
 
+## Caveats
+
+There are likely some weird edge cases around syncing components that regardless of being the same type, contain different controls within them.  EG. Custom Controls, or Crossovers with different properties.  Proceed with caution if attempting this.
+
 ## Not implemented ideas
 
 - **Remove synced property selection** I suspect all states for all controls have a String property associated with them, so could potentially remove the property selection and just use a String property for everything.
