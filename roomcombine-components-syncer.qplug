@@ -1,0 +1,724 @@
+PluginInfo = {
+	Name = "Room Combiner Add-ons~Component Syncer", -- The tilde here indicates folder structure in the Schematic Elements pane
+	Version = "1.0.0",
+	Id = "2797d869-8a86-48cd-ade2-47efe96124a9",
+	Description = "Plugin that can sync controls across like components, when associated with a Room Combiner component.",
+	Author = "Joshua Cerecke - Ceretech Audiovisual Solutions - joshua@ceretech.co.nz"
+}
+
+function GetPrettyName(props)
+	return "Component Syncer V" .. PluginInfo.Version
+end
+
+local Colors = {
+	White = {255, 255, 255},
+	Black = {0, 0, 0},
+	Red = {255, 0, 0},
+	Green = {0, 255, 0},
+	Transparent = "FFFFFFFF"
+}
+
+function GetProperties()
+	props = {
+		{
+			Name = "Rooms",
+			Type = "integer",
+			Value = 8,
+			Min = 2,
+			Max = 256
+		}
+	}
+	return props
+end
+
+function GetControls(props)
+	ctls = {
+		{
+			Name = "RoomCombineTarget",
+			ControlType = "Text",
+			TextBoxStyle = "ComboBox",
+			Count = 1,
+			PinStyle = "Input",
+			UserPin = true
+		},
+		{
+			Name = "SyncingComponentTargets",
+			ControlType = "Text",
+			TextBoxStyle = "Normal",
+			Count = props["Rooms"].Value,
+			PinStyle = "Input",
+			UserPin = true
+        },
+        {
+            Name = "SyncByString",
+            ControlType = "Button",
+			ButtonType = "Toggle",
+            PinStyle = "Input",
+            UserPin = true
+        },
+        {
+            Name = "SyncByValue",
+            ControlType = "Button",
+            ButtonType = "Toggle",
+            PinStyle = "Input",
+            UserPin = true
+        },
+        {
+            Name = "SyncByPosition",
+            ControlType = "Button",
+            ButtonType = "Toggle",
+            PinStyle = "Input",
+            UserPin = true
+        },
+        {
+            Name = "SyncByBoolean",
+            ControlType = "Button",
+            ButtonType = "Toggle",
+            PinStyle = "Input",
+            UserPin = true
+        },
+		{
+			Name = "Status",
+			ControlType = "Indicator",
+			IndicatorType = "Status",
+			Count = 1,
+			PinStyle = "Output",
+			UserPin = true
+		},
+		{
+			Name = "SyncedControls",
+			ControlType = "Text",
+			TextBoxStyle = "ListBox",
+			Count = 1,
+			UserPin = false
+		},
+		{
+			Name = "ComponentType",
+			ControlType = "Text",
+			TextBoxStyle = "Normal",
+			PinStyle = "Output",
+			Count = 1,
+			UserPin = true
+		},
+		{
+			Name = "NonVolatileMem",
+			ControType = "Text",
+			TextBoxStyle = "Normal",
+			Count = 1,
+			UserPin = false
+        }
+	}
+	return ctls
+end
+
+-- This function allows you to layout pages in your plugin.
+function GetControlLayout(props)
+	local roomQty = props["Rooms"].Value
+	-- layout holds representaiton of Controls
+	local layout = {}
+	-- graphics holds aesthetic & design items
+	local graphics = {}
+	-- x,y allows an easy method of knowing where you are relative to the section being designed
+	local x, y = 162, 40
+	
+	for i = 1, roomQty do
+		table.insert(
+		graphics,
+		{
+			Type = "Text",
+			Text = tostring(i),
+			FontSize = 11,
+			HTextAlign = "Center",
+			Color = Colors.Black,
+			Position = {x, y},
+			Size = {36, 16}
+		}
+		)
+		layout["SyncingComponentTargets " .. tostring(i)] = {
+            PrettyName = "Synced Component Name~Room " .. tostring(i),
+			Style = "Text",
+			TextBoxStyle = "Normal",
+			Position = {x, y + 16},
+			Size = {36, 16},
+			HTextAlign = "Center",
+			FontSize = 9,
+			Color = Colors.White,
+			StrokeColor = Colors.Stroke,
+			StrokeWidth = 1
+		}
+		x = x + 36
+    end
+    layout["SyncByString"] = {
+        PrettyName = "Sync by~String",
+		Style = "Button",
+        ButtonStyle = "Toggle",
+		Legend = "String",
+		Position = {162, 102},
+		Size = {72, 20},
+		FontSize = 11
+    }
+    layout["SyncByValue"] = {
+        PrettyName = "Sync by~Value",
+		Style = "Button",
+		ButtonStyle = "Toggle",
+        Legend = "Value",
+		Position = {234, 102},
+		Size = {72, 20},
+		FontSize = 11
+    }
+    layout["SyncByPosition"] = {
+        PrettyName = "Sync by~Position",
+		Style = "Button",
+		ButtonStyle = "Toggle",
+        Legend = "Position",
+		Position = {306, 102},
+		Size = {72, 20},
+		FontSize = 11
+    }
+    layout["SyncByBoolean"] = {
+        PrettyName = "Sync by~Boolean",
+		Style = "Button",
+		ButtonStyle = "Toggle",
+        Legend = "Boolean",
+		Position = {378, 102},
+		Size = {72, 20},
+		FontSize = 11
+    }
+	layout["ComponentType"] = {
+		PrettyName = "Detected Component Type",
+		IsReadOnly = true,
+		Style = "Indicator",
+		IndicatorStyle = "TextBox",
+		Position = {162, 126},
+		Size = {288, 20},
+		FontSize = 11
+	}
+	layout["SyncedControls"] = {
+		PrettyName = "Synced Controls",
+		Style = "ListBox",
+		Position = {162, 150},
+		Size = {288, 128},
+		FontSize = 11
+	}
+	layout["RoomCombineTarget"] = {
+		PrettyName = "Room Combiner Name",
+		Style = "ComboBox",
+		Position = {162, 282},
+		Size = {288, 20},
+		FontSize = 11
+	}
+	layout["Status"] = {
+		PrettyName = "Status",
+		Style = "Indicator",
+		IndicatorStyle = "Status",
+		Position = {162, 306},
+		Size = {288, 48},
+		FontSize = 11,
+		ZOrder = 16
+	}
+	
+	table.insert(
+	graphics,
+	{
+		Type = "GroupBox",
+		Text = "Room",
+		FontSize = 11,
+		FontStyle = "Regular",
+		HTextAlign = "Left",
+		StrokeColor = Colors.Stroke,
+		StrokeWidth = 1,
+		CornerRadius = 8,
+		Color = {51, 51, 51, 255},
+		Fill = {0, 0, 0, 0},
+		Position = {158, 20},
+		Size = {roomQty * 36 + 8, 74},
+		ZOrder = 1
+	}
+    )
+    table.insert(
+	graphics,
+	{
+		Type = "Text",
+		Text = "Sync By Property",
+		FontSize = 11,
+		FontStyle = "Regular",
+		HTextAlign = "Right",
+		Color = {51, 51, 51, 255},
+		Fill = {0, 0, 0, 0},
+		Position = {18, 102},
+		Size = {136, 20},
+		ZOrder = 1
+	}
+	)
+	table.insert(
+	graphics,
+	{
+		Type = "Text",
+		Text = "Detected Component Type",
+		FontSize = 11,
+		FontStyle = "Regular",
+		HTextAlign = "Right",
+		Color = {51, 51, 51, 255},
+		Fill = {0, 0, 0, 0},
+		Position = {18, 126},
+		Size = {136, 20},
+		ZOrder = 1
+	}
+	)
+	table.insert(
+	graphics,
+	{
+		Type = "Text",
+		Text = "Synced Component Names",
+		FontSize = 11,
+		FontStyle = "Regular",
+		HTextAlign = "Right",
+		Color = {51, 51, 51, 255},
+		Fill = {0, 0, 0, 0},
+		Position = {18, 56},
+		Size = {136, 16},
+		ZOrder = 1
+	}
+	)
+	
+	table.insert(
+	graphics,
+	{
+		Type = "Text",
+		Text = "Synced Controls",
+		FontSize = 11,
+		FontStyle = "Regular",
+		HTextAlign = "Right",
+		Color = {51, 51, 51, 255},
+		Fill = {0, 0, 0, 0},
+		Position = {18, 150},
+		Size = {136, 128},
+		ZOrder = 1
+	}
+	)
+	
+	table.insert(
+	graphics,
+	{
+		Type = "Text",
+		Text = "Room Combiner Name",
+		FontSize = 11,
+		FontStyle = "Regular",
+		HTextAlign = "Right",
+		Color = {51, 51, 51, 255},
+		Fill = {0, 0, 0, 0},
+		Position = {18, 282},
+		Size = {136, 20},
+		ZOrder = 1
+	}
+	)
+	table.insert(
+	graphics,
+	{
+		Type = "Text",
+		Text = "Status",
+		FontSize = 11,
+		FontStyle = "Regular",
+		HTextAlign = "Right",
+		Color = {51, 51, 51, 255},
+		Fill = {0, 0, 0, 0},
+		Position = {18, 306},
+		Size = {136, 48},
+		ZOrder = 1
+	}
+	)
+	
+	return layout, graphics
+end
+
+if Controls then
+	require("json")
+	
+	--[[ ******************************* ]]--
+	--[[ ******* Global Variables ****** ]]--
+	--[[ ******************************* ]]--
+	
+	-- pull out all names and types only out of GetComponents()
+	componentTypes = {}
+	roomCombineTargetChoices = {}
+	for i, v in pairs(Component.GetComponents()) do
+		componentTypes[v.Name] = v.Type
+		if v.Type == "room_combiner" then
+			table.insert(roomCombineTargetChoices, v.Name)
+		end
+	end
+	Controls.RoomCombineTarget.Choices = roomCombineTargetChoices
+
+	rooms = {} -- key = room number, value = table of Syncing Components, LED controls (color shows group membership), script component target Text Box controls
+	groups = {} -- sort of reverse table of rooms[room][group] info. Keys are group names (LED colors), Values are room numbers that are members of that group.
+	walls = {} -- key = walls, value = state
+	choices = {} -- key = index, value = table with k:v pairs (Text:string, Icon:string, Color:string, Active:boolean, Index:number)
+	icons = {
+		[true] = string.char(0xe2,0x9c,0x93),
+		[false] = string.char(0xe2,0x9c,0x95),
+	}
+	colors = {
+		[false] = "Black",
+		[true] = "Green"
+	}
+	detectedType = Controls.ComponentType
+	
+	--[[ ******************************* ]]--
+	--[[ ********** Functions ********** ]]--
+	--[[ ******************************* ]]--
+	
+	function allRooms() -- returns a table with all rooms as values
+		local t = {}
+		for room, _ in ipairs(rooms) do
+			table.insert(t, room)
+		end
+		return t
+	end
+	
+	function UpdateStatus(val, msg) -- Updates status, "val" can be passed a number or string.
+		if type(val) == "string" then
+			val = val == "OK" and 0 or val
+			val = val == "Compromised" and 1 or val
+			val = val == "Fault" and 2 or val
+			val = val == "Not Present" and 3 or val
+			val = val == "Missing" and 4 or val
+			val = val == "Initializing" and 5 or val
+			if type(val) ~= "number" then
+				error("UpdateStatus val is incorrectly formatted: Expecting integer 0-5 or valid status string, Received: "..val)
+			end
+		end
+		Controls.Status.Value = val
+		if msg ~= nil then
+			Controls.Status.String = msg
+		end
+	end
+	
+	function IsComponentValid(name)  -- returns true or false if a named component is found.
+		return #Component.GetControls(name) ~= 0 and true or false
+	end
+	
+    function UpdateTextBoxColor(ctl, valid) -- Updates textbox color
+        valid = ctl.String == "" or valid -- Textbox is white if the Text box is blank.
+		ctl.Color = valid and "White" or "Red"  -- Textbox is white if the entry is valid, red if it's not valid.
+	end
+	
+	function ControlHasChanged(roomChanged, ctlName) -- Synced Controls Eventhandler function
+		local ctl = rooms[roomChanged]["component"][ctlName]
+		if Controls.Status.Value == 0 then -- if the status is "OK"
+            for _, room in pairs(groups[rooms[roomChanged]["groupName"]]) do -- For every room in the group
+                if room ~= roomChanged and rooms[room]["component"] ~= nil and rooms[room]["component"][ctlName] ~= nil then -- if the room wasn't the origin of the change, and the room has a component
+                    if Controls.SyncByValue.Boolean then rooms[room]["component"][ctlName].Value = ctl.Value end
+                    if Controls.SyncByPosition.Boolean then rooms[room]["component"][ctlName].Position = ctl.Position end
+                    if Controls.SyncByString.Boolean then rooms[room]["component"][ctlName].String = ctl.String end
+                    if Controls.SyncByBoolean.Boolean then rooms[room]["component"][ctlName].Boolean = ctl.Boolean end
+				end
+			end
+		end
+	end
+	
+    function DestroyComponentEventHandlers(component) -- Remove EventHandler function assigments for all controls in an unused component.
+		if component ~= nil then
+			for _, aControl in pairs(component) do
+				aControl.EventHandler = nil
+			end
+		end
+	end
+	
+    function UpdateControlEventHandler(room, ctlName, active) -- Assign or remove control EventHandler function assignment based on whether it's active or not.
+		if rooms[room]["component"] ~= nil and rooms[room]["component"][ctlName] ~= nil then
+			rooms[room]["component"][ctlName].EventHandler = active and function(ctl) print("EV", room, ctlName) ControlHasChanged(room, ctlName)	end or nil
+		end
+	end
+	
+    function UpdateControlEventHandlerInAllRooms(ctlName, active) -- Used when a Synced Control option changes
+        for room, _ in ipairs(rooms) do
+			UpdateControlEventHandler(room, ctlName, active)
+		end
+	end
+	
+	function CreateAllControlEventHandlersInComponent(room) --Creates EventHandlers for all active Controls inside the Component
+        for i, v in ipairs(choices) do
+			UpdateControlEventHandler(room, v.Text, v.Active)
+        end
+    end
+	
+	function UpdateGroupsTable() 
+		groups = {}
+		for room, t in ipairs(rooms) do
+			-- we're using the LED colour as the group name.
+            local ledColor = t["LEDctl"].Color
+
+            rooms[room]["groupName"] = ledColor
+            if groups[ledColor] == nil then
+                groups[ledColor] = {room}
+            else
+                table.insert(groups[ledColor], room)
+            end
+        end
+	end
+	
+	function SyncroniseAllGroups() -- Syncronises all active controls within all groups
+		print("syncroniseallgroups")
+        for debugname, group in pairs(groups) do -- loop through all groups
+			local lowestRoom = GetFirstRoomWithComponent(group)
+			print("group", debugname, "lowestRoom", lowestRoom)
+			if #group > 1 and lowestRoom ~= nil then -- If a group has more than 1 room member and at least one room with a component
+				print("#group > 1 and lowestRoom ~= nil")
+				for _, choiceTable in ipairs(choices) do -- loop though controls
+					if choiceTable.Active then
+						local ctlName = choiceTable.Text
+						print("ctlName", ctlName)
+						if rooms[lowestRoom]["component"][ctlName] ~= nil then -- if the control exists in the lowest component
+							print("SyncronoiseAllGroups calling (1) ControlHasChanged", roomChanged, ctlName)
+							print("SyncroniseAllGroups calling ControlHasChanged")
+							ControlHasChanged(lowestRoom, ctlName)
+						else
+							print("lowestRoom does not include this control, going searching")
+							for _, room in ipairs(group) do
+								print("searching room", room)
+								if rooms[room]["component"][ctlName] ~= nil then
+									print("FOUND IN ROOM", room)
+									print("SyncronoiseAllGroups calling (2) ControlHasChanged", roomChanged, ctlName)
+
+									ControlHasChanged(room, ctlName)
+									break
+								end
+							end
+						end
+					end
+				end
+			end
+		end
+	end
+	
+    function WallHasChanged() -- Room Combiner Walls Control EventHandler Function
+        UpdateGroupsTable()
+        SyncroniseAllGroups()
+	end
+
+	function SyncedControlsHasChanged(ctl) -- Synced Controls List Box EventHandler Function
+		local chosenChoice = json.decode(ctl.String)
+		local index = chosenChoice.Index
+		
+		choices[index].Active = not choices[index].Active
+		choices[index].Color = colors[choices[index].Active]
+		choices[index].Icon = icons[choices[index].Active]
+		
+		UpdateControlEventHandlerInAllRooms(choices[index].Text, choices[index].Active) -- create/destroy eventHandlers for control that has changed
+		
+		SyncroniseAllGroups()
+
+		Controls.SyncedControls.Choices = choices
+		Controls.NonVolatileMem.String = json.encode(choices)
+	end
+	
+    function UpdateComponentObject(room) -- adds or removes a named component into the rooms table
+        local textBoxCtl = Controls.SyncingComponentTargets[room]
+		local name = textBoxCtl.String
+		local componentValid = IsComponentValid(name)
+		UpdateTextBoxColor(textBoxCtl, componentValid)
+        
+        rooms[room]["component"] = componentValid and Component.New(name) or nil
+	end
+	
+    function SyncedComponentTargetChange(room) -- Synced Component Names Text Box EventHandler function
+        if rooms[room] ~= nil then -- If Room Combiner Name Textbox hasn't been populated yet, then the rooms table won't have any room information in it.
+            DestroyComponentEventHandlers(rooms[room]["component"])
+        end
+        InitialiseAll()
+	end
+	
+	function GetFirstRoomWithComponent(group) -- returns the first room number with a valid component
+        table.sort(group)
+		local firstRoomWithComponent = nil
+        for index, room in ipairs(group) do
+			if rooms[room]["component"] ~= nil then
+                firstRoomWithComponent = room
+				return firstRoomWithComponent
+			end
+		end
+		return firstRoomWithComponent
+	end
+	
+	function VerifyComponentTypes() -- Verify that all component types are the same, returns true or false
+		local firstRoomWithComponent = GetFirstRoomWithComponent(allRooms())
+		
+        if firstRoomWithComponent ~=nil then
+			local firstComponentName = rooms[firstRoomWithComponent]["textBox"].String
+			
+			for room = firstRoomWithComponent, #rooms do -- Check all rooms with components, have the same component type
+				if rooms[room]["component"] ~= nil then
+					local thisRoomComponentName = rooms[room]["textBox"].String
+					
+					if componentTypes[thisRoomComponentName] ~= componentTypes[firstComponentName] then
+						UpdateStatus("Fault", "Not all Syncing components are of same type. "..firstComponentName.." is "..tostring(componentTypes[firstComponentName])..", "..thisRoomComponentName.." is "..tostring(componentTypes[thisRoomComponentName]))
+						return false
+					end
+				end
+			end
+			return true
+		end
+	end
+	
+	function VerifyTwoOrMoreComponents() -- Verifies that at least two components exist, returns true or false.
+		local firstRoomWithComponent = GetFirstRoomWithComponent(allRooms())
+		if firstRoomWithComponent ~= nil then
+			for room = firstRoomWithComponent + 1, #rooms do
+				if rooms[room]["component"] ~= nil then
+					return true
+				end
+			end
+			UpdateStatus("Fault", "Only one valid component specified.")
+			return false
+		else
+			UpdateStatus("Fault", "Error 404: No valid components found.")
+			return false
+		end
+	end
+	
+	function findNameInChoices(name) -- returns an index for a given name in the choices table or false if nothing found.
+		for index, choiceTable in ipairs(choices) do
+			if choiceTable.Text == name then return index end
+		end
+		return false
+	end
+
+	function DisplayChoices() -- Displays all the choices 
+		 local firstRoomWithComponent = GetFirstRoomWithComponent(allRooms())
+		 local firstComponentName = rooms[firstRoomWithComponent]["textBox"].String
+		
+		if detectedType.String ~= componentTypes[firstComponentName] then -- the synced component type has changed. Build the choices table with defaults. 
+			choices = {}
+			local uniqueControls = {}
+			detectedType.String = componentTypes[firstComponentName]
+			
+			local default = false
+			local index = 1
+			for room, roomTable in ipairs(rooms) do -- loop through all rooms
+				if rooms[room]["component"] ~= nil then -- if the room contains a component
+					for name, _ in pairs(rooms[room]["component"]) do -- loop through all the controls in the component
+						if uniqueControls[name] == nil then -- if we haven't seen this control before, then add it to the tables
+							table.insert(choices, {["Text"] = name, ["Icon"] = icons[default], ["Color"] = colors[default], ["Active"] = default, ["Index"] = index})
+							uniqueControls[name] = index
+							index = index + 1
+						end
+					end
+				end
+			end
+
+			Controls.NonVolatileMem.String = json.encode(choices) -- save the choices into non-volatile control string, in case of reboot/redeploy.
+
+		else -- the synced component type remains the same, read in the nonVolatileMem table into the choices table and update.
+
+			choices = json.decode(Controls.NonVolatileMem.String)
+
+			local uniqueControls = {}
+			local default = false
+			local index = 1
+
+			for room, roomTable in ipairs(rooms) do
+				if rooms[room]["component"] ~= nil then 
+					for name, _ in pairs(rooms[room]["component"]) do
+						if uniqueControls[name] == nil then
+							if not findNameInChoices(name) then
+								table.insert(choices, {["Text"] = name, ["Icon"] = icons[default], ["Color"] = colors[default], ["Active"] = default, ["Index"] = index})
+							end
+							uniqueControls[name] = index
+							index = index + 1
+						end
+					end
+				end
+			end
+			for index = #choices, 1, -1 do
+				local choiceTable = choices[index]
+				print(index, choiceTable)
+				if uniqueControls[choiceTable.Text] == nil then -- if there's entries in the choices table that don't exist in uniqueControls then remove them.
+					table.remove(choices, index)
+				end
+			end
+
+			Controls.NonVolatileMem.String = json.encode(choices)
+
+		end
+		
+		Controls.SyncedControls.Choices = choices
+	end
+	
+	function InitialiseAll()
+		UpdateStatus("Initializing")
+		
+		local componentValid = IsComponentValid(Controls.RoomCombineTarget.String) --Check Room Combiner Component Exists
+		UpdateTextBoxColor(Controls.RoomCombineTarget, componentValid)
+
+		if componentValid then
+			roomCombiner = Component.New(Controls.RoomCombineTarget.String)
+
+			local numberOfRooms = 0
+
+			for name, control in pairs(roomCombiner) do
+				if name:find("output%.%d+%.combined") then
+					numberOfRooms = numberOfRooms + 1
+					local room = tonumber(name:match("output%.(%d+)%.combined"))
+					
+					rooms[room] = {} -- Add each room & their tables
+					
+					rooms[room]["LEDctl"] = control -- Add Room Combiner LEDs Controls
+					
+					
+				elseif name:find("wall%.%d+%.open") then -- Add each wall's open button into an array and assign eventhandler to watch it
+					local room = tonumber(name:match("wall%.(%d+)%.open"))
+					walls[room] = control
+					control.EventHandler = function() 
+						WallHasChanged()
+					end
+				end
+			end
+			
+			if numberOfRooms ~= #Controls.SyncingComponentTargets then
+				UpdateStatus("Fault", "Room Combiner number of rooms does not match this plugin - Room Combiner: "..tostring(numberOfRooms)..", This Plugin: "..#Controls.SyncingComponentTargets)
+			end
+			
+			UpdateGroupsTable()
+			
+			for room, roomTable in pairs(rooms) do
+				roomTable["textBox"] = Controls.SyncingComponentTargets[room] -- Add Syncing Component Targets Text Boxes
+				
+				UpdateComponentObject(room, Controls.SyncingComponentTargets[room]) -- Update Component objects
+			end
+			
+			if VerifyTwoOrMoreComponents() and VerifyComponentTypes() then -- Check that all components are the same type & there are 2 or more
+				DisplayChoices()
+				
+				for room, t in ipairs(rooms) do -- Create EventHandlers for all active controls in all rooms with components
+					if t.component ~= nil then
+						CreateAllControlEventHandlersInComponent(room)
+					end
+				end
+            end
+			
+			if Controls.Status.String == "Initializing" then -- Finished initialising with no faults, update status to OK.
+                UpdateStatus("OK")
+                SyncroniseAllGroups()
+			end
+		else
+            UpdateStatus("Fault", "Room Combiner target not a valid component. Check component name and try again.")
+		end
+		
+	end
+	
+	--Run all eventhandler code on startup:
+	InitialiseAll()
+
+    for i, v in ipairs(Controls.SyncingComponentTargets) do
+        v.EventHandler = function() SyncedComponentTargetChange(i) end
+    end
+
+    Controls.SyncByValue.EventHandler = SyncroniseAllGroups
+    Controls.SyncByPosition.EventHandler = SyncroniseAllGroups
+    Controls.SyncByString.EventHandler = SyncroniseAllGroups
+    Controls.SyncByBoolean.EventHandler = SyncroniseAllGroups
+
+	Controls.RoomCombineTarget.EventHandler = InitialiseAll
+	
+	Controls.SyncedControls.EventHandler = function(ctl) SyncedControlsHasChanged(ctl) end
+end
