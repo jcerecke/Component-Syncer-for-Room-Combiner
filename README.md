@@ -40,6 +40,5 @@ There are likely some weird edge cases around syncing components that regardless
 
 ## Not implemented ideas
 
-- **Remove synced property selection** I suspect all states for all controls have a String property associated with them, so could potentially remove the property selection and just use a String property for everything.
 - **Sets of Rooms** Instead using multiple instances of the plugin to syncronise multiple sets of components, the plugin could implement sets of components. Not sure how to do Synced Control selection for each set - possible in a combo box instead of a list box beside each set.
 - **Restricted Values** Consider this example: 2 combinable rooms with video switchers. There are local inputs in Room A and in Room B, and also a set of Global inputs. When uncombined both rooms should only be able to access it's own local inputs, both can access global inputs at anytime. When combined, both rooms should be able to access the other rooms local inputs also. When rooms move from combined to un-combined they must not remain on a local input that belongs to the other room. Still considering how to implement for any component/control type. See my [Room Combine Switcher](https://github.com/jcerecke/Switcher-Room-Combiner) for an example of this feature.
