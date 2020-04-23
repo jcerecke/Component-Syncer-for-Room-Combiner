@@ -36,6 +36,8 @@ Just use your Room Combiner component as usual to group rooms together. When roo
 
 ## Caveats
 
+### Syncing Components with different controls
+
 There are likely some weird edge cases around syncing components that regardless of being the same type, contain different controls within them.  EG. Custom Controls, Matrices or Crossovers with different properties.  Proceed with caution if attempting this and please report any bugs.
 
 ## Not implemented ideas
