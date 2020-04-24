@@ -6,12 +6,7 @@ Syncronises groups of like components based on a Room Combiner's state.
 
 This plugin is provided as open source software for you to use and modify.  If you use this for commercial purposes I would ask that you donate for every project this is used in, in order to help with development costs.
 
-<form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-<input type="hidden" name="cmd" value="_s-xclick" />
-<input type="hidden" name="hosted_button_id" value="ZYF826FYE4R8E" />
-<input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" title="Please donate" alt="Donate with PayPal button" />
-<img alt="" border="0" src="https://www.paypal.com/en_NZ/i/scr/pixel.gif" width="1" height="1" />
-</form>
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=ZYF826FYE4R8E&source=url)
 
 ## Setup
 
