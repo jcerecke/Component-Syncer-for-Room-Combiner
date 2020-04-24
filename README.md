@@ -1,6 +1,6 @@
 # Component Syncer for Room Combiner
 
-Syncronises groups of like components based on a Room Combiner's state.
+Synchronises groups of like components based on a Room Combiner's state.
 
 ## Donate
 
