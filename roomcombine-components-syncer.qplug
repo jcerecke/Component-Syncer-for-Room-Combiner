@@ -1,6 +1,6 @@
 PluginInfo = {
 	Name = "Room Combiner Add-ons~Component Syncer", -- The tilde here indicates folder structure in the Schematic Elements pane
-	Version = "1.0.0",
+	Version = "1.0.1",
 	Id = "2797d869-8a86-48cd-ade2-47efe96124a9",
 	Description = "Plugin that can sync controls across like components, when associated with a Room Combiner component.",
 	Author = "Joshua Cerecke - Ceretech Audiovisual Solutions - joshua@ceretech.co.nz"
@@ -351,7 +351,7 @@ if Controls then
 
 	rooms = {} -- key = room number, value = table of Syncing Components, LED controls (color shows group membership), script component target Text Box controls
 	groups = {} -- sort of reverse table of rooms[room][group] info. Keys are group names (LED colors), Values are room numbers that are members of that group.
-	walls = {} -- key = walls, value = state
+	walls = {} -- key = index, value = control
 	choices = {} -- key = index, value = table with k:v pairs (Text:string, Icon:string, Color:string, Active:boolean, Index:number)
 	icons = {
 		[true] = string.char(0xe2,0x9c,0x93),
@@ -665,9 +665,10 @@ if Controls then
 					rooms[room]["LEDctl"] = control -- Add Room Combiner LEDs Controls
 					
 					
-				elseif name:find("wall%.%d+%.open") then -- Add each wall's open button into an array and assign eventhandler to watch it
-					local room = tonumber(name:match("wall%.(%d+)%.open"))
-					walls[room] = control
+				elseif name:find("wall%.%d+%.") then -- Add each wall's open button & config box into an array and assign eventhandler to watch it
+					local wall, ctl = name:match("wall%.(%d+)%.(.*)")
+          			walls[wall] = {}
+					walls[wall].ctl = control
 					control.EventHandler = function() 
 						WallHasChanged()
 					end
